@@ -1,0 +1,22 @@
+# Maven
+target/
+dependency-reduced-pom.xml
+
+# Generated database — schema.sql is committed, library.db is not
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
