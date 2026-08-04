@@ -1,12 +1,20 @@
 # Maven
 target/
-dependency-reduced-pom.xml
+!.mvn/wrapper/maven-wrapper.jar
 
-# Generated database — schema.sql is committed, library.db is not
+# Local development database — schema.sql is committed, the database is not
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Secrets and local overrides — production credentials come from the environment
+.env
+*.local.properties
+application-local.properties
+
+# Logs
+*.log
 
 # IDEs
 .idea/

@@ -1,86 +1,123 @@
 # Library Management System
 
-Desktop application for managing a library's catalog, members, and borrowing
-activity. Java + Swing on the front, SQLite via JDBC underneath.
+Web application for managing a library's catalog, members, and borrowing
+activity. Spring Boot with server-rendered Thymeleaf templates, JPA over SQLite
+locally and PostgreSQL in production.
 
-See [`docs/proposal.md`](docs/proposal.md) for the full project proposal.
+See [`docs/proposal.md`](docs/proposal.md) for the full proposal.
 
 ## Requirements
 
 - JDK 21 or newer
 - Maven 3.9 or newer
 
-Nothing else to install — SQLite ships as a Maven dependency, not a server.
+Nothing else to install locally — SQLite is a Maven dependency, not a server.
 
 ## Build and run
 
 ```bash
-mvn test          # run the test suite
-mvn exec:java     # run the app from source
-mvn package       # build target/library-management-system-1.0-SNAPSHOT.jar
+mvn test              # run the test suite
+mvn spring-boot:run   # run at http://localhost:8080
+mvn package           # build target/library-management-system-1.0-SNAPSHOT.jar
 java -jar target/library-management-system-1.0-SNAPSHOT.jar
 ```
 
-On first run the app creates `library.db` in the working directory by applying
-`src/main/resources/schema.sql`. Delete the file to start over — it is
-gitignored and never committed. The schema is; that is the file to edit when the
-data model changes.
+On first run Hibernate creates `library.db` in the working directory from the
+entity definitions. Delete the file to start over — it is gitignored and never
+committed.
+
+Until a `SecurityFilterChain` exists in `config/`, Spring Boot's default security
+applies: every URL requires login as user `user`, with a password generated and
+printed at startup.
 
 ## Layout
 
 ```
 src/main/java/com/library/
-  Main.java              entry point — initializes the DB, opens the window
-  ui/                    Swing windows and event handlers
-  service/               business rules and transactions
-  dao/                   one DAO per entity, all SQL lives here
-  domain/                Book, Member, Loan, Reservation
-  persistence/           Database — connections and schema bootstrap
+  LibraryApplication.java   entry point; component scan starts here
+  controller/               HTTP endpoints and form handling
+  service/                  business rules and @Transactional operations
+  repository/               Spring Data repositories — all queries live here
+  domain/                   Book, Member, Loan, WaitlistEntry (JPA entities)
+  config/                   security and application configuration
 src/main/resources/
-  schema.sql             table definitions, constraints, indexes
-src/test/java/           JUnit 5 tests, mirroring the main package layout
+  application.properties        local development (SQLite)
+  application-prod.properties   production (PostgreSQL, all values from env)
+  schema.sql                    readable schema reference — not executed
+  templates/                    Thymeleaf views
+  static/                       CSS and images
+src/test/java/                  tests, mirroring the main package layout
 ```
 
-The dependency direction is one-way: `ui → service → dao → persistence`, with
-`domain` available to every layer. A class that reaches backwards — SQL in a
-panel, a `JOptionPane` in a service — is in the wrong package.
+Dependencies point one way: `controller → service → repository → database`, with
+`domain` visible to all. Two rules keep that honest:
+
+1. A controller never touches a repository directly. It goes through a service.
+2. No queries outside the repository layer.
 
 ## Ground rules
 
-These come from the proposal and are worth keeping in front of you while
-building:
+From the proposal, worth keeping in front of you while building:
 
-- **All SQL uses `PreparedStatement`.** Never concatenate values into a query.
-- **Multi-step writes run in one transaction.** Borrowing inserts a loan *and*
-  decrements `available_copies`; both succeed or neither does. The service layer
-  owns `setAutoCommit(false)` / `commit()` / `rollback()`; DAO methods that take
-  part accept the `Connection` as a parameter.
-- **Availability is derived, not flagged.** `available_copies` is the truth; there
-  is no separate "is available" boolean to drift out of sync.
-- **Overdue is computed at read time** from `due_date`. It is never a stored column.
-- **Uniqueness is enforced twice** — a `UNIQUE` constraint on ISBN and email, plus
-  validation in the service layer that produces a readable error message.
+- **Multi-step writes are `@Transactional`.** Borrowing inserts a loan *and*
+  decrements `availableCopies`; returning increments it *and* promotes the front
+  of the waitlist to `READY`. Each set commits or rolls back together.
+- **Availability is a count, not a flag.** No `isAvailable` boolean — it drifts.
+- **Overdue is computed at read time** from the due date. No `overdue` column.
+- **Passwords are BCrypt hashes.** Never plain text. Email is the login identifier.
+- **Uniqueness is enforced twice** — a database constraint on ISBN and email, plus
+  service-layer validation that produces a readable message. Same for the "one
+  waitlist spot per member per title" rule, which has a partial unique index on
+  `ACTIVE` entries as its backstop.
+- **No secrets in the repository.** Production credentials arrive as environment
+  variables.
+
+`schema.sql` is documentation, not migration. Hibernate builds the real schema
+from the entities; when the two disagree, the entities win and `schema.sql` is
+the thing to fix.
+
+## Database
+
+| Environment | Engine | Configured by |
+|---|---|---|
+| Local development | SQLite file (`library.db`) | `application.properties`, active by default |
+| Production | Managed PostgreSQL | `application-prod.properties`, via `SPRING_PROFILES_ACTIVE=prod` |
+
+SQLite is not viable in production: hosting platforms give containers an
+ephemeral filesystem, so the database file disappears on every redeploy. Because
+access goes through JPA, switching engines is configuration rather than code.
+
+The `prod` profile expects `JDBC_DATABASE_URL`, `JDBC_DATABASE_USERNAME`, and
+`JDBC_DATABASE_PASSWORD` in the environment, and binds to `PORT` if the platform
+sets it. It runs `ddl-auto=validate`, so a schema mismatch fails startup instead
+of quietly altering the production database.
 
 ## Build order
 
 1. Book CRUD
-2. Member registration
+2. Member registration and login
 3. Borrow and return
 4. Search
-5. Reservations
+5. Waitlist
 6. Borrowing history
+7. Deploy
+
+Deploy is last, but worth proving early — push a skeleton that only lists books
+so the pipeline works, then redeploy as features land. Discovering a deployment
+problem the night before submission is the failure mode this ordering avoids.
 
 ## Still open
 
-Decisions the team has not made yet. The scaffold does not commit to any of them:
+Decisions the team has not made. The scaffold commits to none of them:
 
-- **UI toolkit** — scaffolded with Swing because it is in the JDK and needs no
-  setup. Only `ui/` and the pom depend on that choice, so switching to JavaFX
-  stays cheap while `ui/` is thin.
-- **Active-loan cap per member** — proposal suggests 5.
 - **Loan period** — proposal suggests 14 days.
+- **`READY` hold duration** — how long a held copy waits before passing to the
+  next member on the waitlist.
 - **Librarian view of all loans**, or is per-member history enough?
-- **Reservation expiry** — should a `READY` reservation lapse after N days?
+- **Waitlist notifications** — email needs a mail service; an in-app notice on
+  login does not.
+- **Hosting platform** — Render, Railway, or Fly.io.
+- **First librarian account** — self-registration or seeded manually?
 
-The last four are service-layer constants and rules; put them in one place when
-you get there rather than scattering literals through `LoanService`.
+The first two are service-layer constants. Put them in one place when you get
+there rather than scattering literals through `LoanService`.
