@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Catalog')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: member-chrome('catalog')}"></th:block>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Browse the Collection</p>
+      <h2>The Catalog</h2>
+      <p class="sub">Search by title, author, or category. Availability is live from the shelf.</p>
+      <div class="rule">❦</div>
+    </div>
+
+    <!-- Server-side search: the prototype filtered cards in the browser;
+         this submits ?q=… and lets BookService query the database. -->
+    <form class="searchbar" th:action="@{/catalog}" method="get">
+      <input type="text" name="q" th:value="${q}" placeholder="Search title or author&hellip;" autocomplete="off">
+      <button type="submit" class="btn">Search</button>
+    </form>
+
+    <div class="chips">
+      <a th:each="cat : ${ {'All', 'Fiction', 'History', 'Science', 'Philosophy', 'Poetry'} }"
+         class="chip" style="text-decoration:none;"
+         th:classappend="${(category == null || category.isBlank() ? 'All' : category).equalsIgnoreCase(cat)} ? 'active'"
+         th:href="@{/catalog(q=${q}, category=${cat == 'All' ? null : cat})}"
+         th:text="${cat}">All</a>
+    </div>
+
+    <div class="book-grid">
+      <a class="book-card" th:each="book, iter : ${books}"
+         th:href="@{/books/{id}(id=${book.id})}">
+        <div class="spine"
+             th:classappend="${ {'green','oxblood','slate','brass','plum','umber'}[iter.index % 6] }">
+          <span th:text="${book.author}">Author</span>
+        </div>
+        <div class="body">
+          <h3 th:text="${book.title}">Title</h3>
+          <p class="author" th:text="${book.author}">Author</p>
+          <span class="avail"
+                th:classappend="${book.availableCopies == 0} ? 'out' : (${book.availableCopies == 1} ? 'low' : 'in')">
+            <span class="dot"></span>
+            <th:block th:if="${book.availableCopies > 0}"
+                      th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' on shelf'"></th:block>
+            <th:block th:if="${book.availableCopies == 0}">On loan</th:block>
+          </span>
+          <div class="meta">
+            <span class="cat" th:text="${book.category} ?: 'Uncategorized'">Category</span>
+            <span class="isbn" th:text="${book.isbn}">ISBN</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <p th:if="${#lists.isEmpty(books)}"
+       style="text-align:center; margin-top:48px; color:var(--ink-faint); font-family:var(--serif); font-size:22px; font-style:italic;">
+      Nothing on the shelves matches that — try another word.
+    </p>
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('❦')}"></th:block>
+
+</body>
+</html>

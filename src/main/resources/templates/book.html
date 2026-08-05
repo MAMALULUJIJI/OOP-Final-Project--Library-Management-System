@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${book.title})}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: member-chrome('catalog')}"></th:block>
+
+  <main class="page">
+    <div class="detail">
+
+      <div>
+        <div class="cover" style="background:#92a7ba;">
+          <div class="c-top">Library Collection</div>
+          <div class="c-title" th:text="${book.title}">Title</div>
+          <div class="c-author" th:text="${book.author}">Author</div>
+        </div>
+      </div>
+
+      <div class="d-body">
+        <p class="kicker" style="font-size:11px; letter-spacing:0.34em; text-transform:uppercase; color:var(--brass); margin-bottom:10px;"
+           th:text="${book.category} ?: 'Uncategorized'">Category</p>
+        <h2 th:text="${book.title}">Title</h2>
+        <p class="d-author" th:text="${book.author}">Author</p>
+
+        <span class="avail" style="font-size:14px;"
+              th:classappend="${book.availableCopies == 0} ? 'out' : (${book.availableCopies == 1} ? 'low' : 'in')">
+          <span class="dot"></span>
+          <th:block th:if="${book.availableCopies > 0}"
+                    th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' on the shelf'"></th:block>
+          <th:block th:if="${book.availableCopies == 0}">All copies on loan</th:block>
+        </span>
+
+        <dl class="specs">
+          <dt>ISBN</dt><dd class="isbn" style="font-size:13px;" th:text="${book.isbn}">ISBN</dd>
+          <dt>Category</dt><dd th:text="${book.category} ?: 'Uncategorized'">Category</dd>
+          <dt>Copies</dt><dd th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' available'">0 of 0</dd>
+          <dt>Loan period</dt><dd>14 days from date of borrowing</dd>
+        </dl>
+
+        <!-- Borrow and waitlist arrive with the circulation work (LoanService /
+             WaitlistService); until then the buttons are honest about it. -->
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
+          <button class="btn" disabled title="Circulation is not built yet">Borrow This Book</button>
+          <button class="btn brass" disabled title="Circulation is not built yet">Join the Waitlist</button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('❦')}"></th:block>
+
+</body>
+</html>
