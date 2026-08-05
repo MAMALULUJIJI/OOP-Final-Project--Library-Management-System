@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Edit a Title')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: staff-chrome('dashboard')}"></th:block>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Catalog Management</p>
+      <h2>Edit a Title</h2>
+      <p class="sub">Copies on loan are untouchable: the total cannot drop below the number currently out.</p>
+      <div class="rule">✦</div>
+    </div>
+
+    <div class="panel" style="max-width:640px; margin:0 auto;">
+      <form th:action="@{/admin/books/{id}(id=${bookId})}" th:object="${bookForm}" method="post">
+        <label class="field">
+          <span class="lbl">Title</span>
+          <input type="text" th:field="*{title}">
+          <span style="color:var(--bad); font-size:13px;" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+        </label>
+        <label class="field">
+          <span class="lbl">Author</span>
+          <input type="text" th:field="*{author}">
+          <span style="color:var(--bad); font-size:13px;" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+        </label>
+        <div class="form-grid">
+          <label class="field">
+            <span class="lbl">ISBN</span>
+            <input type="text" th:field="*{isbn}">
+            <span style="color:var(--bad); font-size:13px;" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></span>
+          </label>
+          <label class="field">
+            <span class="lbl">Category</span>
+            <select th:field="*{category}">
+              <option value="">Uncategorized</option>
+              <option value="Fiction">Fiction</option>
+              <option value="History">History</option>
+              <option value="Science">Science</option>
+              <option value="Philosophy">Philosophy</option>
+              <option value="Poetry">Poetry</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span class="lbl">Total Copies</span>
+          <input type="number" min="1" th:field="*{totalCopies}">
+          <span style="color:var(--bad); font-size:13px;" th:if="${#fields.hasErrors('totalCopies')}" th:errors="*{totalCopies}"></span>
+        </label>
+        <div style="display:flex; gap:12px; margin-top:6px;">
+          <button class="btn" type="submit" style="flex:1;">Save Changes</button>
+          <a class="btn ghost" th:href="@{/admin}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('✦')}"></th:block>
+
+</body>
+</html>

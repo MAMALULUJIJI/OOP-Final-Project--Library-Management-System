@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!-- Shared page chrome, extracted from the static prototype per its README.
+     Each fragment is pulled in with th:replace; nothing here renders on its own. -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- head(title): common <head> for every page. The signature sits on the
+     <head> element itself — a nested block named "head" would lose to the
+     tag-name selector and fail to resolve. -->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} + ' · Library Management System'">Library Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+  <!-- Member chrome: green rail, Catalog / My Account nav. -->
+  <th:block th:fragment="member-chrome(active)">
+    <div class="toprail">Library Management System · <em>Circulation Desk Open</em> · Loans run 14 days</div>
+    <header class="masthead">
+      <div class="masthead-inner">
+        <div class="userbar">
+          <!-- TODO(auth): populate from the authenticated principal. -->
+          <span class="who">Signed in as <b>Guest</b><span class="role-badge">Member</span></span>
+          <a class="out" th:href="@{/catalog}">Sign Out</a>
+        </div>
+        <div class="ornament">❦ ❦ ❦</div>
+        <h1><a th:href="@{/catalog}">Library Management System</a></h1>
+        <p class="tagline">Catalog · Circulation · Records</p>
+        <nav class="nav">
+          <a th:href="@{/catalog}" th:classappend="${active == 'catalog'} ? 'active'">Catalog</a>
+          <a href="#" title="Arrives with circulation">My Account</a>
+        </nav>
+      </div>
+    </header>
+  </th:block>
+
+  <!-- Staff chrome: terracotta rail, the librarian's tools. -->
+  <th:block th:fragment="staff-chrome(active)">
+    <div class="toprail" style="background:var(--oxblood);">Library Management System · <em>Staff Area</em> · Librarian access only</div>
+    <header class="masthead">
+      <div class="masthead-inner">
+        <div class="userbar">
+          <!-- TODO(auth): populate from the authenticated principal. -->
+          <span class="who">Signed in as <b>Librarian</b><span class="role-badge staff">Staff</span></span>
+          <a class="out" th:href="@{/catalog}">Sign Out</a>
+        </div>
+        <div class="ornament">✦ ✦ ✦</div>
+        <h1><a th:href="@{/admin}">Library Management System</a></h1>
+        <p class="tagline">Staff · Librarian&rsquo;s Desk</p>
+        <nav class="nav">
+          <a th:href="@{/admin}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
+          <a href="#" title="Arrives with member management">Members</a>
+          <a th:href="@{/admin/books/new}" th:classappend="${active == 'add'} ? 'active'">Add a Title</a>
+          <a href="#" title="Arrives with member management">Register a Member</a>
+        </nav>
+      </div>
+    </header>
+  </th:block>
+
+  <!-- One-shot messages set by RedirectAttributes.addFlashAttribute. -->
+  <th:block th:fragment="flash">
+    <div th:if="${notice}" class="notice" style="max-width:680px; margin:0 auto 26px;" th:text="${notice}"></div>
+    <div th:if="${error}" class="notice" style="max-width:680px; margin:0 auto 26px; border-color:var(--bad); color:var(--bad);" th:text="${error}"></div>
+  </th:block>
+
+  <th:block th:fragment="footer(mark)">
+    <footer class="footer">
+      <div class="ornament" th:text="${mark}">❦</div>
+      Library Management System · OOP Final Project
+    </footer>
+  </th:block>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: staff-chrome('dashboard')}"></th:block>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Staff Only</p>
+      <h2>The Librarian&rsquo;s Desk</h2>
+      <p class="sub">Maintain the catalog, manage copies, and keep the shelves honest.</p>
+      <div class="rule">✦</div>
+    </div>
+
+    <th:block th:replace="~{fragments :: flash}"></th:block>
+
+    <!-- Members and holds belong to member management and circulation;
+         their tiles return when those features land. -->
+    <div class="stats">
+      <div class="stat"><div class="n" th:text="${#lists.size(books)}">0</div><div class="l">Titles in Catalog</div></div>
+      <div class="stat"><div class="n" th:text="${#lists.isEmpty(books) ? 0 : #aggregates.sum(books.![totalCopies])}">0</div><div class="l">Copies Owned</div></div>
+      <div class="stat"><div class="n" th:text="${#lists.isEmpty(books) ? 0 : #aggregates.sum(books.![copiesOnLoan])}">0</div><div class="l">Loans Out</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Catalog Ledger</h3>
+      <p class="panel-sub">A title cannot be removed while any copy is on loan.</p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Title</th><th class="hide-sm">ISBN</th><th>Copies</th><th>On Loan</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="book : ${books}">
+            <td>
+              <div class="title-cell" th:text="${book.title}">Title</div>
+              <div class="sub-cell" th:text="${book.author} + ' · ' + (${book.category} ?: 'Uncategorized')">Author</div>
+            </td>
+            <td class="num hide-sm" th:text="${book.isbn}">ISBN</td>
+            <td class="num" th:text="${book.totalCopies}">0</td>
+            <td class="num" th:text="${book.copiesOnLoan}">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <a class="btn ghost small" th:href="@{/admin/books/{id}/edit(id=${book.id})}">Edit</a>
+              <form th:action="@{/admin/books/{id}/delete(id=${book.id})}" method="post" style="display:inline;">
+                <button class="btn danger small" type="submit"
+                        th:disabled="${book.copiesOnLoan > 0}"
+                        th:title="${book.copiesOnLoan > 0} ? 'Blocked while copies are on loan' : 'Remove this title'">Remove</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(books)}">
+            <td colspan="5" style="text-align:center; color:var(--ink-faint); padding:34px 0;">
+              The catalog is empty — add the first title.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('✦')}"></th:block>
+
+</body>
+</html>
