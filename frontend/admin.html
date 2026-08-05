@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Library Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="toprail" style="background:var(--oxblood);">Library Management System · <em>Staff Area</em> · Librarian access only</div>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="userbar">
+        <span class="who">Signed in as <b>Librarian</b><span class="role-badge staff">Staff</span></span>
+        <a class="out" href="index.html">Sign Out</a>
+      </div>
+      <div class="ornament">✦ ✦ ✦</div>
+      <h1><a href="admin.html">Library Management System</a></h1>
+      <p class="tagline">Staff · Librarian&rsquo;s Desk</p>
+      <nav class="nav">
+        <a href="admin.html" class="active">Dashboard</a>
+        <a href="members.html">Members</a>
+        <a href="add-book.html">Add a Title</a>
+        <a href="register-member.html">Register a Member</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Staff Only</p>
+      <h2>The Librarian&rsquo;s Desk</h2>
+      <p class="sub">Maintain the catalog, manage copies, and keep the shelves honest.</p>
+      <div class="rule">✦</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">20</div><div class="l">Titles in Catalog</div></div>
+      <div class="stat"><div class="n">67</div><div class="l">Copies Owned</div></div>
+      <div class="stat"><div class="n">12</div><div class="l">Members</div></div>
+      <div class="stat"><div class="n">17</div><div class="l">Loans Out</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">Holds Ready</div></div>
+    </div>
+
+    <div class="panel" id="ledger">
+      <h3>Catalog Ledger</h3>
+      <p class="panel-sub">A title cannot be removed while any copy is on loan.</p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Title</th><th class="hide-sm">ISBN</th><th>Copies</th><th>On Loan</th><th>Waitlist</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="title-cell">The Remains of the Day</div><div class="sub-cell">K. Ishiguro · Fiction</div></td>
+            <td class="num hide-sm">978-0-571-25824-6</td>
+            <td class="num">5</td><td class="num">2</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">The Guns of August</div><div class="sub-cell">B. W. Tuchman · History</div></td>
+            <td class="num hide-sm">978-0-345-47609-8</td>
+            <td class="num">4</td><td class="num">3</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">The Selfish Gene</div><div class="sub-cell">R. Dawkins · Science</div></td>
+            <td class="num hide-sm">978-0-19-878860-7</td>
+            <td class="num">5</td><td class="num">5</td><td class="num">4</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">Meditations</div><div class="sub-cell">M. Aurelius · Philosophy</div></td>
+            <td class="num hide-sm">978-0-14-044933-4</td>
+            <td class="num">6</td><td class="num">0</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">One Hundred Years of Solitude</div><div class="sub-cell">G. García Márquez · Fiction</div></td>
+            <td class="num hide-sm">978-0-06-088328-7</td>
+            <td class="num">3</td><td class="num">3</td><td class="num">2</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">Leaves of Grass</div><div class="sub-cell">W. Whitman · Poetry</div></td>
+            <td class="num hide-sm">978-0-14-042199-6</td>
+            <td class="num">3</td><td class="num">1</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">A Brief History of Time</div><div class="sub-cell">S. Hawking · Science</div></td>
+            <td class="num hide-sm">978-0-553-38016-3</td>
+            <td class="num">5</td><td class="num">1</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">Sapiens</div><div class="sub-cell">Y. N. Harari · History</div></td>
+            <td class="num hide-sm">978-0-06-231609-7</td>
+            <td class="num">6</td><td class="num">5</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">The Republic</div><div class="sub-cell">Plato · Philosophy</div></td>
+            <td class="num hide-sm">978-0-14-045511-3</td>
+            <td class="num">3</td><td class="num">3</td><td class="num">1</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">Beloved</div><div class="sub-cell">T. Morrison · Fiction</div></td>
+            <td class="num hide-sm">978-1-4000-3341-6</td>
+            <td class="num">2</td><td class="num">0</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">The Waste Land</div><div class="sub-cell">T. S. Eliot · Poetry</div></td>
+            <td class="num hide-sm">978-0-393-97499-7</td>
+            <td class="num">3</td><td class="num">0</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">Pride and Prejudice</div><div class="sub-cell">J. Austen · Fiction</div></td>
+            <td class="num hide-sm">978-0-14-143951-8</td>
+            <td class="num">4</td><td class="num">2</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small" disabled title="Blocked while copies are on loan">Remove</button>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="title-cell">On the Origin of Species</div><div class="sub-cell">C. Darwin · Science</div></td>
+            <td class="num hide-sm">978-0-14-043205-3</td>
+            <td class="num">2</td><td class="num">0</td><td class="num">0</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button class="btn ghost small">Edit</button>
+              <button class="btn danger small">Remove</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="ornament">✦</div>
+    Library Management System · OOP Final Project · Staff Area
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
