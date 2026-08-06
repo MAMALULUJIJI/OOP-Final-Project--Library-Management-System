@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Register a Member')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: staff-chrome('register')}"/>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Member Management</p>
+      <h2>Register a Member</h2>
+      <p class="sub">Issue a new library card. Email doubles as the login identifier and must be unique.</p>
+      <div class="rule">✦</div>
+    </div>
+
+    <div class="panel" style="max-width:640px; margin:0 auto;">
+      <form th:action="@{/admin/members}" th:object="${memberForm}" method="post">
+        <label class="field">
+          <span class="lbl">Full Name</span>
+          <input type="text" th:field="*{name}" placeholder="e.g. Eleanor Vance">
+          <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"
+                style="color:var(--bad); font-size:13px;"></span>
+        </label>
+        <label class="field">
+          <span class="lbl">Email Address</span>
+          <input type="email" th:field="*{email}" placeholder="e.g. e.vance@example.edu">
+          <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"
+                style="color:var(--bad); font-size:13px;"></span>
+        </label>
+        <label class="field">
+          <span class="lbl">Temporary Password</span>
+          <input type="password" th:field="*{password}">
+          <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"
+                style="color:var(--bad); font-size:13px;"></span>
+        </label>
+        <div style="display:flex; gap:12px; margin-top:6px;">
+          <button class="btn" type="submit" style="flex:1;">Issue Library Card</button>
+          <a class="btn ghost" th:href="@{/admin/members}">Cancel</a>
+        </div>
+        <p class="hint" style="margin-top:14px;">New members are created with member access and active
+          status. A member ID is assigned automatically.</p>
+      </form>
+    </div>
+
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('✦')}"/>
+
+</body>
+</html>

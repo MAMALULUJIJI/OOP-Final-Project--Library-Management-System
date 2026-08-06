@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Members')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: staff-chrome('members')}"/>
+
+  <main class="page">
+    <div class="page-head">
+      <p class="kicker">Member Records</p>
+      <h2>The Member Register</h2>
+      <p class="sub">Every card issued by the library. Suspended members cannot borrow.</p>
+      <div class="rule">✦</div>
+    </div>
+
+    <th:block th:replace="~{fragments :: flash}"/>
+
+    <div class="panel">
+      <h3>Registered Members</h3>
+      <p class="panel-sub">
+        <span th:text="${#lists.size(members)} + ' members on record.'">0 members on record.</span>
+        <a th:href="@{/admin/members/new}" style="color:var(--green);">Register a new member &rarr;</a>
+        <!-- Loans and waitlist counts arrive with circulation. -->
+      </p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Member</th><th class="hide-sm">Email</th><th class="hide-sm">Joined</th><th>Loans Out</th><th>Waitlists</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="m : ${members}">
+            <td>
+              <div class="title-cell" th:text="${m.name}">Eleanor Vance</div>
+              <div class="sub-cell num" th:text="'M-' + ${#numbers.formatInteger(m.id, 5)}">M-01203</div>
+            </td>
+            <td class="num hide-sm" th:text="${m.email}">e.vance@example.edu</td>
+            <td class="num hide-sm" th:text="${#temporals.format(m.joinDate, 'MMM yyyy')}">Sep 2025</td>
+            <td class="num" title="Arrives with circulation">&mdash;</td>
+            <td class="num" title="Arrives with circulation">&mdash;</td>
+            <td>
+              <span th:if="${!m.suspended}" class="stamp green">Active</span>
+              <span th:if="${m.suspended}" class="stamp red">Suspended</span>
+            </td>
+            <td style="text-align:right; white-space:nowrap;">
+              <form th:if="${!m.suspended}" th:action="@{/admin/members/{id}/suspend(id=${m.id})}" method="post" style="display:inline;">
+                <button class="btn ghost small" type="submit">Suspend</button>
+              </form>
+              <form th:if="${m.suspended}" th:action="@{/admin/members/{id}/reactivate(id=${m.id})}" method="post" style="display:inline;">
+                <button class="btn small" type="submit">Reactivate</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(members)}">
+            <td colspan="7" style="text-align:center; color:var(--ink-faint); padding:28px 0;">
+              No members yet — issue the first library card.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('✦')}"/>
+
+</body>
+</html>
