@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.library.domain.Book;
 import com.library.repository.BookRepository;
+import com.library.repository.LoanRepository;
+import com.library.repository.WaitlistRepository;
 
 /**
  * Business rules for the catalog. All validation beyond simple field checks
@@ -17,9 +19,13 @@ import com.library.repository.BookRepository;
 public class BookService {
 
     private final BookRepository books;
+    private final LoanRepository loans;
+    private final WaitlistRepository waitlist;
 
-    public BookService(BookRepository books) {
+    public BookService(BookRepository books, LoanRepository loans, WaitlistRepository waitlist) {
         this.books = books;
+        this.loans = loans;
+        this.waitlist = waitlist;
     }
 
     /**
@@ -89,18 +95,22 @@ public class BookService {
         return book;
     }
 
-    /** A title cannot leave the catalog while any copy is out with a member. */
+    /**
+     * A title cannot leave the catalog while any copy is out with a member.
+     * Checked twice: the derived count, and the loan table itself as the
+     * backstop. A removed title takes its closed loans and its waitlist
+     * with it — the rows reference the book and cannot outlive it.
+     */
     @Transactional
     public void delete(Long id) {
         Book book = getById(id);
-        // TODO(circulation): once LoanRepository exists, also check
-        // loanRepository.existsByBookIdAndReturnDateIsNull(id) so the loan
-        // table itself is the backstop, not just the derived count.
-        if (book.getCopiesOnLoan() > 0) {
+        if (book.getCopiesOnLoan() > 0 || loans.existsByBookAndReturnDateIsNull(book)) {
             throw new IllegalStateException(
                     "Cannot remove \"" + book.getTitle() + "\": "
                             + book.getCopiesOnLoan() + " copies are on loan.");
         }
+        waitlist.deleteByBook(book);
+        loans.deleteByBook(book);
         books.delete(book);
     }
 

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('My Account')}"></head>
+<body>
+
+  <th:block th:replace="~{fragments :: member-chrome('account')}"></th:block>
+
+  <main class="page">
+
+    <th:block th:replace="~{fragments :: flash}"/>
+
+    <div class="library-card">
+      <div class="lc-head">
+        <span>Library Member Card</span>
+        <span th:text="'No. M-' + ${#numbers.formatInteger(member.id, 5)}">No. M-00001</span>
+      </div>
+      <div class="lc-name" th:text="${member.name}">Member Name</div>
+      <div class="lc-row">
+        <span>Email <b class="mono" th:text="${member.email}">email</b></span>
+        <span>Member since <b th:text="${#temporals.format(member.joinDate, 'MMMM yyyy')}">January 2026</b></span>
+        <span>Status
+          <b th:if="${!member.suspended}" style="color:var(--ok);">Active</b>
+          <b th:if="${member.suspended}" style="color:var(--bad);">Suspended</b>
+        </span>
+      </div>
+    </div>
+
+    <!-- Current loans -->
+    <div class="panel" style="margin-bottom:28px;">
+      <h3>On Loan to You</h3>
+      <p class="panel-sub">Overdue status is computed from the due date &mdash; return at any time.</p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Title</th><th class="hide-sm">Borrowed</th><th>Due</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="loan : ${loans}" th:if="${loan.open}">
+            <td>
+              <div class="title-cell" th:text="${loan.book.title}">Title</div>
+              <div class="sub-cell" th:text="${loan.book.author} + (${loan.book.category} != null ? ' · ' + ${loan.book.category} : '')">Author</div>
+            </td>
+            <td class="num hide-sm" th:text="${#temporals.format(loan.borrowDate, 'MMM d, yyyy')}">date</td>
+            <td class="num" th:text="${#temporals.format(loan.dueDate, 'MMM d, yyyy')}">date</td>
+            <td>
+              <span th:if="${!loan.overdue}" class="stamp green">On Time</span>
+              <span th:if="${loan.overdue}" class="stamp red"
+                    th:text="'Overdue · ' + ${loan.daysOverdue} + (${loan.daysOverdue == 1} ? ' day' : ' days')">Overdue</span>
+            </td>
+            <td style="text-align:right;">
+              <form th:action="@{/loans/{id}/return(id=${loan.id})}" method="post" style="display:inline;">
+                <button class="btn ghost small" type="submit">Return</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(loans.?[open])}">
+            <td colspan="5" style="text-align:center; color:var(--ink-faint); padding:28px 0;">
+              Nothing out at the moment — the catalog awaits.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Waitlists -->
+    <div class="panel" style="margin-bottom:28px;">
+      <h3>Titles You&rsquo;re Waiting For</h3>
+      <p class="panel-sub">One spot per title, any number of titles. A hold marked
+        <span class="badge ready">Ready</span> is kept at the desk for
+        <th:block th:text="${holdDays}">3</th:block> days.</p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Title</th><th class="hide-sm">Joined</th><th>Position</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="standing : ${waitlists}">
+            <td>
+              <div class="title-cell" th:text="${standing.entry.book.title}">Title</div>
+              <div class="sub-cell" th:text="${standing.entry.book.author}">Author</div>
+            </td>
+            <td class="num hide-sm" th:text="${#temporals.format(standing.entry.joinedAt, 'MMM d, yyyy')}">date</td>
+            <td>
+              <span th:if="${standing.entry.ready}" class="badge ready">Ready</span>
+              <span th:unless="${standing.entry.ready}" class="badge pos"
+                    th:text="${standing.position} + ' of ' + ${standing.queueLength}">1 of 1</span>
+            </td>
+            <td class="sub-cell">
+              <th:block th:if="${standing.entry.ready}">A copy is held for you until
+                <b style="color:var(--ink);" th:text="${#temporals.format(standing.heldUntil, 'MMM d')}">date</b></th:block>
+              <th:block th:unless="${standing.entry.ready}"
+                        th:text="${standing.position == 1} ? 'Next in line' : 'Waiting in line'">Waiting in line</th:block>
+            </td>
+            <td style="text-align:right; white-space:nowrap;">
+              <form th:if="${standing.entry.ready}" th:action="@{/books/{id}/borrow(id=${standing.entry.book.id})}" method="post" style="display:inline;">
+                <button class="btn small" type="submit">Borrow Now</button>
+              </form>
+              <form th:action="@{/waitlist/{id}/cancel(id=${standing.entry.id})}" method="post" style="display:inline;">
+                <button class="btn danger small" type="submit">Leave List</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(waitlists)}">
+            <td colspan="5" style="text-align:center; color:var(--ink-faint); padding:28px 0;">
+              You&rsquo;re not waiting on anything.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Full history -->
+    <div class="panel">
+      <h3>The Ledger</h3>
+      <p class="panel-sub">Every loan on your record, past and present.</p>
+      <table class="ledger">
+        <thead>
+          <tr><th>Title</th><th class="hide-sm">Borrowed</th><th class="hide-sm">Due</th><th>Returned</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="loan : ${loans}">
+            <td>
+              <div class="title-cell" th:text="${loan.book.title}">Title</div>
+              <div class="sub-cell" th:text="${loan.book.author}">Author</div>
+            </td>
+            <td class="num hide-sm" th:text="${#temporals.format(loan.borrowDate, 'MMM d, yyyy')}">date</td>
+            <td class="num hide-sm" th:text="${#temporals.format(loan.dueDate, 'MMM d, yyyy')}">date</td>
+            <td class="num" th:text="${loan.returnDate != null} ? ${#temporals.format(loan.returnDate, 'MMM d, yyyy')} : '—'">—</td>
+            <td>
+              <span th:if="${loan.open && !loan.overdue}" class="stamp amber">Out</span>
+              <span th:if="${loan.open && loan.overdue}" class="stamp red">Overdue</span>
+              <span th:if="${!loan.open && loan.returnedLate}" class="stamp grey">Returned Late</span>
+              <span th:if="${!loan.open && !loan.returnedLate}" class="stamp grey">Returned</span>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(loans)}">
+            <td colspan="5" style="text-align:center; color:var(--ink-faint); padding:28px 0;">
+              No loans on record yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <th:block th:replace="~{fragments :: footer('❦')}"></th:block>
+
+</body>
+</html>

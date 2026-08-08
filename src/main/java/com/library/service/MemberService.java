@@ -40,6 +40,14 @@ public class MemberService {
     }
 
     /**
+     * Resolve the signed-in principal to their member record. The principal
+     * name is the email Spring Security authenticated, already lower case.
+     */
+    public Member getByEmail(String email) {
+        return members.findByEmail(email).orElseThrow(() -> new MemberNotFoundException(email));
+    }
+
+    /**
      * Issue a library card. Email is the login identifier: it is normalized
      * to lower case so K.Agrawal@ and k.agrawal@ cannot become two accounts,
      * and the password is stored only as a BCrypt hash.

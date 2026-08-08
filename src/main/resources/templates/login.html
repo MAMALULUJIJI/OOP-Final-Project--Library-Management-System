@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Sign In')}"></head>
+<body>
+
+  <div class="toprail">Library Management System · <em>Sign In</em></div>
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="ornament">❧</div>
+      <h1>Sign In</h1>
+      <p class="tagline">Borrow · Waitlist · History</p>
+
+      <div th:if="${param.error}" class="notice" style="border-color:var(--bad); color:var(--bad); margin-bottom:18px;">
+        That email and password don&rsquo;t match our records.
+      </div>
+      <div th:if="${param.logout}" class="notice" style="margin-bottom:18px;">
+        You have been signed out.
+      </div>
+
+      <!-- POST is handled by Spring Security's form-login filter; the CSRF
+           token is added automatically because the action is a th:action. -->
+      <form th:action="@{/login}" method="post">
+        <label class="field">
+          <span class="lbl">Email Address</span>
+          <input type="email" name="email" placeholder="you@example.edu" required autofocus autocomplete="email">
+        </label>
+        <label class="field">
+          <span class="lbl">Password</span>
+          <input type="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="btn block">Sign In</button>
+      </form>
+
+      <p class="foot">
+        Members and library staff sign in here alike.<br>
+        Not a member yet? Memberships are registered at the front desk.<br><br>
+        <a th:href="@{/catalog}">&larr; Back to the catalog</a>
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
