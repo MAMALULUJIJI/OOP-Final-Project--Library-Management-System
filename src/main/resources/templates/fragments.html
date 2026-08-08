@@ -22,9 +22,11 @@
     <header class="masthead">
       <div class="masthead-inner">
         <div class="userbar">
-          <!-- TODO(auth): populate from the authenticated principal. -->
-          <span class="who">Signed in as <b>Guest</b><span class="role-badge">Member</span></span>
-          <a class="out" th:href="@{/catalog}">Sign Out</a>
+          <!-- TODO(auth): once Member and form login exist, this becomes the
+               authenticated principal and the link becomes a real Sign Out.
+               Until then it says so plainly rather than faking an identity. -->
+          <span class="who">Not signed in<span class="role-badge">Member view</span></span>
+          <a class="out" th:href="@{/admin}">Librarian&rsquo;s Desk &rarr;</a>
         </div>
         <div class="ornament">❦ ❦ ❦</div>
         <h1><a th:href="@{/catalog}">Library Management System</a></h1>
@@ -43,18 +45,19 @@
     <header class="masthead">
       <div class="masthead-inner">
         <div class="userbar">
-          <!-- TODO(auth): populate from the authenticated principal. -->
-          <span class="who">Signed in as <b>Librarian</b><span class="role-badge staff">Staff</span></span>
-          <a class="out" th:href="@{/catalog}">Sign Out</a>
+          <!-- TODO(auth): see member-chrome. /admin/** gets hasRole('LIBRARIAN')
+               here once roles exist; today the area is open to anyone. -->
+          <span class="who">Not signed in<span class="role-badge staff">Staff view</span></span>
+          <a class="out" th:href="@{/catalog}">&larr; Catalog</a>
         </div>
         <div class="ornament">✦ ✦ ✦</div>
         <h1><a th:href="@{/admin}">Library Management System</a></h1>
         <p class="tagline">Staff · Librarian&rsquo;s Desk</p>
         <nav class="nav">
           <a th:href="@{/admin}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
-          <a href="#" title="Arrives with member management">Members</a>
+          <a th:href="@{/admin/members}" th:classappend="${active == 'members'} ? 'active'">Members</a>
           <a th:href="@{/admin/books/new}" th:classappend="${active == 'add'} ? 'active'">Add a Title</a>
-          <a href="#" title="Arrives with member management">Register a Member</a>
+          <a th:href="@{/admin/members/new}" th:classappend="${active == 'register'} ? 'active'">Register a Member</a>
         </nav>
       </div>
     </header>
