@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments :: head(${book.title})}"></head>
 <body>
 
   <th:block th:replace="~{fragments :: member-chrome('catalog')}"></th:block>
 
   <main class="page">
+
+    <th:block th:replace="~{fragments :: flash}"/>
+
     <div class="detail">
 
       <div>
@@ -22,11 +26,14 @@
         <h2 th:text="${book.title}">Title</h2>
         <p class="d-author" th:text="${book.author}">Author</p>
 
+        <!-- What the shelf offers *this* viewer: shelved copies minus
+             copies reserved for READY waitlist holds. -->
         <span class="avail" style="font-size:14px;"
-              th:classappend="${book.availableCopies == 0} ? 'out' : (${book.availableCopies == 1} ? 'low' : 'in')">
+              th:classappend="${effectiveAvailable == 0} ? 'out' : (${effectiveAvailable == 1} ? 'low' : 'in')">
           <span class="dot"></span>
-          <th:block th:if="${book.availableCopies > 0}"
-                    th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' on the shelf'"></th:block>
+          <th:block th:if="${effectiveAvailable > 0}"
+                    th:text="${effectiveAvailable} + ' of ' + ${book.totalCopies} + ' on the shelf'"></th:block>
+          <th:block th:if="${effectiveAvailable == 0 && book.availableCopies > 0}">Remaining copies held for the waitlist</th:block>
           <th:block th:if="${book.availableCopies == 0}">All copies on loan</th:block>
         </span>
 
@@ -34,14 +41,41 @@
           <dt>ISBN</dt><dd class="isbn" style="font-size:13px;" th:text="${book.isbn}">ISBN</dd>
           <dt>Category</dt><dd th:text="${book.category} ?: 'Uncategorized'">Category</dd>
           <dt>Copies</dt><dd th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' available'">0 of 0</dd>
-          <dt>Loan period</dt><dd>14 days from date of borrowing</dd>
+          <dt>Loan period</dt>
+          <dd th:text="${loanDays} + ' days from date of borrowing'">14 days from date of borrowing</dd>
         </dl>
 
-        <!-- Borrow and waitlist arrive with the circulation work (LoanService /
-             WaitlistService); until then the buttons are honest about it. -->
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
-          <button class="btn" disabled title="Circulation is not built yet">Borrow This Book</button>
-          <button class="btn brass" disabled title="Circulation is not built yet">Join the Waitlist</button>
+        <!-- Signed in: the one button that applies right now. A READY hold
+             beats everything; otherwise borrow if the shelf allows, else
+             join (or stand in) the waitlist. -->
+        <div sec:authorize="isAuthenticated()" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:22px;">
+
+          <form th:if="${readyHold != null}" th:action="@{/books/{id}/borrow(id=${book.id})}" method="post">
+            <button class="btn" type="submit">Borrow Now &mdash; a copy is held for you</button>
+          </form>
+
+          <form th:if="${readyHold == null && effectiveAvailable > 0}"
+                th:action="@{/books/{id}/borrow(id=${book.id})}" method="post">
+            <button class="btn" type="submit">Borrow This Book</button>
+          </form>
+
+          <th:block th:if="${readyHold == null && effectiveAvailable == 0}">
+            <th:block th:if="${activeEntry != null}">
+              <span class="badge pos" th:text="'You are #' + ${position} + ' in line'">#1 in line</span>
+              <form th:action="@{/waitlist/{id}/cancel(id=${activeEntry.id})}" method="post">
+                <button class="btn danger small" type="submit">Leave the Waitlist</button>
+              </form>
+            </th:block>
+            <form th:if="${activeEntry == null}" th:action="@{/books/{id}/waitlist(id=${book.id})}" method="post">
+              <button class="btn brass" type="submit">Join the Waitlist</button>
+            </form>
+          </th:block>
+
+        </div>
+
+        <div sec:authorize="!isAuthenticated()" style="margin-top:22px;">
+          <a class="btn" th:href="@{/login}"
+             th:text="${effectiveAvailable > 0} ? 'Sign in to borrow' : 'Sign in to join the waitlist'">Sign in to borrow</a>
         </div>
 
       </div>

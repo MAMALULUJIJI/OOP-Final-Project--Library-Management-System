@@ -8,27 +8,40 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Wide open on purpose, for now: only the catalog exists, and member accounts
- * don't. Replacing Spring Boot's default (every URL behind a generated
- * password) with permit-all makes the book CRUD testable in a browser.
+ * Access rules per proposal 3.3: session-based form login, email as the
+ * username, and the staff area behind the LIBRARIAN role. The catalog stays
+ * public — browsing requires no account; borrowing does.
  *
- * TODO(auth): once Member and login land, restrict /admin/** to LIBRARIAN and
- * add form login per proposal section 3.3. CSRF stays on — Thymeleaf forms
- * include the token automatically.
+ * <p>CSRF stays on — Thymeleaf adds the token to every {@code th:action}
+ * form automatically, the login form included.
  */
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        http
+            .authorizeHttpRequests(auth -> auth
+                // The librarian's desk, catalog and member management alike.
+                .requestMatchers("/admin/**").hasRole("LIBRARIAN")
+                // Circulation: you must be somebody to borrow a book.
+                .requestMatchers("/account", "/books/*/borrow", "/books/*/waitlist",
+                        "/loans/*/return", "/waitlist/*/cancel").authenticated()
+                // Browsing the catalog, the login page, css and js: public.
+                .anyRequest().permitAll())
+            .formLogin(form -> form
+                .loginPage("/login")
+                .usernameParameter("email")
+                .defaultSuccessUrl("/catalog")
+                .permitAll())
+            .logout(logout -> logout
+                .logoutSuccessUrl("/catalog"));
         return http.build();
     }
 
     /**
      * BCrypt for member passwords (proposal 3.3). Registration hashes with
-     * this today; form login will verify against the same hashes when auth
-     * lands, so no member needs re-registering.
+     * this, and form login verifies against the same hashes.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

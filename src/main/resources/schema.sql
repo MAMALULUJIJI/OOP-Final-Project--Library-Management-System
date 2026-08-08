@@ -48,7 +48,10 @@ CREATE TABLE waitlist_entry (
     -- Queue position is first-come, first-served on this timestamp.
     joined_at TIMESTAMP   NOT NULL,
     status    VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
-              CHECK (status IN ('ACTIVE', 'READY', 'FULFILLED', 'CANCELLED'))
+              CHECK (status IN ('ACTIVE', 'READY', 'FULFILLED', 'CANCELLED')),
+    -- Set when the entry is promoted to READY; the hold expires a fixed number
+    -- of days after this (CirculationPolicy.HOLD_PERIOD_DAYS).
+    ready_at  TIMESTAMP
 );
 
 -- Open loans per book: blocks removing a title while a copy is out.

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!-- Shared page chrome, extracted from the static prototype per its README.
      Each fragment is pulled in with th:replace; nothing here renders on its own. -->
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <!-- head(title): common <head> for every page. The signature sits on the
      <head> element itself — a nested block named "head" would lose to the
      tag-name selector and fail to resolve. -->
@@ -22,18 +23,24 @@
     <header class="masthead">
       <div class="masthead-inner">
         <div class="userbar">
-          <!-- TODO(auth): once Member and form login exist, this becomes the
-               authenticated principal and the link becomes a real Sign Out.
-               Until then it says so plainly rather than faking an identity. -->
-          <span class="who">Not signed in<span class="role-badge">Member view</span></span>
-          <a class="out" th:href="@{/admin}">Librarian&rsquo;s Desk &rarr;</a>
+          <span class="who" sec:authorize="isAuthenticated()">
+            Signed in as <b sec:authentication="name">member</b><span class="role-badge">Member</span>
+          </span>
+          <span class="who" sec:authorize="!isAuthenticated()">Not signed in<span class="role-badge">Guest</span></span>
+          <a class="out" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/admin}">Librarian&rsquo;s Desk &rarr;</a>
+          <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" style="display:inline;">
+            <button class="out" type="submit" style="background:none; border:none; cursor:pointer; padding:0; font:inherit;">Sign Out</button>
+          </form>
+          <a class="out" sec:authorize="!isAuthenticated()" th:href="@{/login}">Sign In &rarr;</a>
         </div>
         <div class="ornament">❦ ❦ ❦</div>
         <h1><a th:href="@{/catalog}">Library Management System</a></h1>
         <p class="tagline">Catalog · Circulation · Records</p>
         <nav class="nav">
           <a th:href="@{/catalog}" th:classappend="${active == 'catalog'} ? 'active'">Catalog</a>
-          <a href="#" title="Arrives with circulation">My Account</a>
+          <a sec:authorize="isAuthenticated()" th:href="@{/account}"
+             th:classappend="${active == 'account'} ? 'active'">My Account</a>
+          <a sec:authorize="!isAuthenticated()" th:href="@{/login}" title="Sign in to see your loans">My Account</a>
         </nav>
       </div>
     </header>
@@ -45,10 +52,13 @@
     <header class="masthead">
       <div class="masthead-inner">
         <div class="userbar">
-          <!-- TODO(auth): see member-chrome. /admin/** gets hasRole('LIBRARIAN')
-               here once roles exist; today the area is open to anyone. -->
-          <span class="who">Not signed in<span class="role-badge staff">Staff view</span></span>
+          <span class="who">
+            Signed in as <b sec:authentication="name">librarian</b><span class="role-badge staff">Staff</span>
+          </span>
           <a class="out" th:href="@{/catalog}">&larr; Catalog</a>
+          <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button class="out" type="submit" style="background:none; border:none; cursor:pointer; padding:0; font:inherit;">Sign Out</button>
+          </form>
         </div>
         <div class="ornament">✦ ✦ ✦</div>
         <h1><a th:href="@{/admin}">Library Management System</a></h1>

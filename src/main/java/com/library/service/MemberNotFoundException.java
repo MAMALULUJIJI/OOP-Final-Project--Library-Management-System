@@ -10,4 +10,8 @@ public class MemberNotFoundException extends RuntimeException {
     public MemberNotFoundException(Long id) {
         super("No member with id " + id);
     }
+
+    public MemberNotFoundException(String email) {
+        super("No member with email " + email);
+    }
 }

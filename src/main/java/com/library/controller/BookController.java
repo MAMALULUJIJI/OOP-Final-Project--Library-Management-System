@@ -1,5 +1,7 @@
 package com.library.controller;
 
+import java.security.Principal;
+
 import jakarta.validation.Valid;
 
 import org.springframework.stereotype.Controller;
@@ -13,9 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.library.domain.Book;
+import com.library.domain.Member;
 import com.library.service.BookForm;
 import com.library.service.BookService;
+import com.library.service.CirculationPolicy;
 import com.library.service.DuplicateIsbnException;
+import com.library.service.MemberService;
+import com.library.service.WaitlistService;
 
 /**
  * Catalog pages for members and the book side of the librarian's desk.
@@ -25,9 +31,15 @@ import com.library.service.DuplicateIsbnException;
 public class BookController {
 
     private final BookService bookService;
+    private final WaitlistService waitlistService;
+    private final MemberService memberService;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService,
+                          WaitlistService waitlistService,
+                          MemberService memberService) {
         this.bookService = bookService;
+        this.waitlistService = waitlistService;
+        this.memberService = memberService;
     }
 
     // ---------- member-facing ----------
@@ -48,9 +60,29 @@ public class BookController {
         return "catalog";
     }
 
+    /**
+     * The book page decides which circulation button to show, so alongside
+     * the book it gets what the shelf really offers this viewer: copies not
+     * reserved for waitlist holds, plus the viewer's own hold or place in
+     * line when signed in.
+     */
     @GetMapping("/books/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        model.addAttribute("book", bookService.getById(id));
+    public String detail(@PathVariable Long id, Principal principal, Model model) {
+        Book book = bookService.getById(id);
+        model.addAttribute("book", book);
+        model.addAttribute("effectiveAvailable", waitlistService.effectiveAvailable(book));
+        model.addAttribute("loanDays", CirculationPolicy.LOAN_PERIOD_DAYS);
+        model.addAttribute("readyHold", null);
+        model.addAttribute("activeEntry", null);
+        if (principal != null) {
+            Member member = memberService.getByEmail(principal.getName());
+            waitlistService.readyHold(book, member)
+                    .ifPresent(hold -> model.addAttribute("readyHold", hold));
+            waitlistService.activeEntry(book, member).ifPresent(entry -> {
+                model.addAttribute("activeEntry", entry);
+                model.addAttribute("position", waitlistService.positionOf(entry));
+            });
+        }
         return "book";
     }
 
