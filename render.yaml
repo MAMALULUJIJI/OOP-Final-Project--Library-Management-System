@@ -1,0 +1,55 @@
+# Render Blueprint. Creating a service from this file provisions the web
+# service and its PostgreSQL database together.
+#
+# TWO manual steps remain — both are one-time:
+#
+#   1. Set JDBC_DATABASE_URL in the dashboard. Render's own connection string
+#      is a postgres:// URL, which the JDBC driver will not accept; Spring
+#      needs the jdbc:postgresql:// form. Take the database's Internal Host,
+#      Port and Name from its Render page and write:
+#          jdbc:postgresql://<internal-host>:5432/<database>
+#
+#   2. Apply src/main/resources/schema.sql to the database once. The prod
+#      profile runs Hibernate with ddl-auto=validate, which checks the schema
+#      but never creates it, so the first boot fails against an empty database
+#      with "Schema-validation: missing table [book]".
+
+services:
+  - type: web
+    name: library-management-system
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: claude/project-setup-354w21
+    healthCheckPath: /login
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # Set by hand — see note 1 above.
+      - key: JDBC_DATABASE_URL
+        sync: false
+
+      # These two are plain values, so Render can wire them automatically.
+      - key: JDBC_DATABASE_USERNAME
+        fromDatabase:
+          name: library-db
+          property: user
+      - key: JDBC_DATABASE_PASSWORD
+        fromDatabase:
+          name: library-db
+          property: password
+
+      # The first librarian account, created at startup if no LIBRARIAN exists.
+      # sync: false so Render prompts for them — a password written into a
+      # committed file is a password in the repository.
+      - key: LIBRARY_LIBRARIAN_EMAIL
+        sync: false
+      - key: LIBRARY_LIBRARIAN_PASSWORD
+        sync: false
+
+databases:
+  - name: library-db
+    plan: free
+    databaseName: library
+    user: library
