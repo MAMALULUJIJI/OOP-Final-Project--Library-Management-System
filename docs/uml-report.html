@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Management System — UML Report</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral",
+      securityLevel: "loose",
+      flowchart: { htmlLabels: true },
+      sequence: { mirrorActors: false, messageAlign: "center" }
+    });
+  </script>
+  <style>
+    :root {
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #d6d3d1;
+      --paper: #fafaf9;
+      --panel: #ffffff;
+      --accent: #1e3a2f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.55;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding: 2.5rem 1.5rem 2rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header h1 {
+      margin: 0 0 0.4rem;
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    nav.toc {
+      max-width: 960px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem;
+    }
+    nav.toc h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+    }
+    nav.toc ol {
+      margin: 0;
+      padding-left: 1.25rem;
+      columns: 2;
+      gap: 2rem;
+    }
+    nav.toc a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    nav.toc a:hover { text-decoration: underline; }
+    main {
+      max-width: 960px;
+      margin: 0 auto 4rem;
+      padding: 0 1.5rem;
+    }
+    section {
+      margin-top: 2.75rem;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    section h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.45rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.4rem;
+    }
+    section h3 {
+      margin: 1.5rem 0 0.5rem;
+      font-size: 1.1rem;
+    }
+    section p, section li {
+      color: var(--ink);
+      font-size: 1rem;
+    }
+    section p.note {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .diagram {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin: 1rem 0 1.5rem;
+      overflow-x: auto;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 0.55rem 0.7rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f5f5f4;
+      font-weight: 600;
+    }
+    code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      background: #f5f5f4;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+    footer {
+      max-width: 960px;
+      margin: 0 auto 3rem;
+      padding: 0 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1rem;
+    }
+    @media print {
+      body { background: white; }
+      nav.toc { display: none; }
+      .diagram { border-color: #bbb; break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+    @media (max-width: 700px) {
+      nav.toc ol { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <p>UML report — Member management, authentication, circulation, waitlist, and borrowing history</p>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#scope">Scope</a></li>
+    <li><a href="#domain">Domain class diagram</a></li>
+    <li><a href="#layers">Layered architecture</a></li>
+    <li><a href="#member-seq">Member registration</a></li>
+    <li><a href="#member-status">Member status</a></li>
+    <li><a href="#login">Login sequence</a></li>
+    <li><a href="#security">Security access rules</a></li>
+    <li><a href="#borrow">Borrow sequence</a></li>
+    <li><a href="#return">Return + waitlist promote</a></li>
+    <li><a href="#waitlist">Join / leave waitlist</a></li>
+    <li><a href="#waitlist-sm">Waitlist state machine</a></li>
+    <li><a href="#account">Account / borrowing history</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="scope">
+  <h2>1. Scope</h2>
+  <p>This report covers the implemented features corresponding to the project build order through borrowing history:</p>
+  <ul>
+    <li><strong>Member management</strong> — register, list, suspend, reactivate (librarian)</li>
+    <li><strong>Authentication</strong> — form login by email, BCrypt passwords, role-based access</li>
+    <li><strong>Circulation</strong> — borrow and return with transactional availability updates</li>
+    <li><strong>Waitlist</strong> — join, leave, READY promotion, hold expiry</li>
+    <li><strong>Borrowing history</strong> — account page with open loans, waitlists, and ledger</li>
+  </ul>
+  <p class="note">Architecture rule: controllers call services; services call repositories; no controller→repository shortcuts. Multi-step writes (borrow, return) are <code>@Transactional</code>.</p>
+</section>
+
+<section id="domain">
+  <h2>2. Domain class diagram</h2>
+  <p>Core entities and enums. Availability is a copy count on <code>Book</code>; overdue is computed on <code>Loan</code> at read time and never stored.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+classDiagram
+    direction TB
+
+    class Book {
+        -Long id
+        -String isbn
+        -String title
+        -String author
+        -String category
+        -int totalCopies
+        -int availableCopies
+        +getCopiesOnLoan() int
+    }
+
+    class Member {
+        -Long id
+        -String name
+        -String email
+        -String passwordHash
+        -Role role
+        -LocalDate joinDate
+        -MemberStatus status
+        +isSuspended() boolean
+    }
+
+    class Loan {
+        -Long id
+        -LocalDate borrowDate
+        -LocalDate dueDate
+        -LocalDate returnDate
+        +isOpen() boolean
+        +isOverdue() boolean
+        +getDaysOverdue() long
+        +isReturnedLate() boolean
+    }
+
+    class WaitlistEntry {
+        -Long id
+        -LocalDateTime joinedAt
+        -WaitlistStatus status
+        -LocalDateTime readyAt
+        +isReady() boolean
+    }
+
+    class Role {
+        <<enumeration>>
+        MEMBER
+        LIBRARIAN
+    }
+
+    class MemberStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+    }
+
+    class WaitlistStatus {
+        <<enumeration>>
+        ACTIVE
+        READY
+        FULFILLED
+        CANCELLED
+    }
+
+    Book "1" <-- "*" Loan : book
+    Member "1" <-- "*" Loan : member
+    Book "1" <-- "*" WaitlistEntry : book
+    Member "1" <-- "*" WaitlistEntry : member
+    Member --> Role
+    Member --> MemberStatus
+    WaitlistEntry --> WaitlistStatus
+    </pre>
+  </div>
+</section>
+
+<section id="layers">
+  <h2>3. Layered architecture</h2>
+  <p>Spring Boot packages: HTTP controllers → business services → Spring Data repositories → JPA entities. Security and seeders sit in <code>config</code>.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+classDiagram
+    direction TB
+
+    class BookController
+    class MemberController
+    class CirculationController
+    class AccountController
+    class LoginController
+
+    class BookService
+    class MemberService
+    class LoanService
+    class WaitlistService
+
+    class BookRepository
+    class MemberRepository
+    class LoanRepository
+    class WaitlistRepository
+
+    class Book
+    class Member
+    class Loan
+    class WaitlistEntry
+
+    class SecurityConfig
+    class LibraryUserDetailsService
+    class LibrarianSeeder
+    class BookSeeder
+
+    BookController --> BookService
+    BookController --> WaitlistService
+    BookController --> MemberService
+    MemberController --> MemberService
+    CirculationController --> LoanService
+    CirculationController --> WaitlistService
+    CirculationController --> MemberService
+    AccountController --> LoanService
+    AccountController --> WaitlistService
+    AccountController --> MemberService
+
+    BookService --> BookRepository
+    BookService --> LoanRepository
+    BookService --> WaitlistRepository
+    MemberService --> MemberRepository
+    LoanService --> LoanRepository
+    LoanService --> BookRepository
+    LoanService --> WaitlistService
+    WaitlistService --> WaitlistRepository
+    WaitlistService --> BookRepository
+
+    BookRepository ..> Book
+    MemberRepository ..> Member
+    LoanRepository ..> Loan
+    WaitlistRepository ..> WaitlistEntry
+
+    LibraryUserDetailsService --> MemberRepository
+    LibrarianSeeder --> MemberRepository
+    BookSeeder --> BookRepository
+    SecurityConfig ..> LibraryUserDetailsService : uses
+    </pre>
+  </div>
+</section>
+
+<section id="member-seq">
+  <h2>4. Member registration sequence</h2>
+  <p>Librarians issue cards at <code>POST /admin/members</code>. New accounts always receive <code>Role.MEMBER</code> and <code>MemberStatus.ACTIVE</code>; the password is stored only as a BCrypt hash.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor Librarian
+    participant MC as MemberController
+    participant MS as MemberService
+    participant PE as PasswordEncoder
+    participant MR as MemberRepository
+    participant DB as Database
+
+    Librarian->>MC: POST /admin/members
+    MC->>MC: validate MemberForm
+    alt validation fails
+        MC-->>Librarian: redisplay form
+    else valid
+        MC->>MS: register(form)
+        MS->>MS: normalize email
+        MS->>MR: existsByEmail(email)
+        MR->>DB: SELECT
+        alt duplicate email
+            MS-->>MC: DuplicateEmailException
+            MC-->>Librarian: field error
+        else new email
+            MS->>PE: encode(password)
+            PE-->>MS: BCrypt hash
+            MS->>MS: role MEMBER, status ACTIVE
+            MS->>MR: save(member)
+            MR->>DB: INSERT
+            MS-->>MC: Member
+            MC-->>Librarian: redirect + notice
+        end
+    end
+    </pre>
+  </div>
+</section>
+
+<section id="member-status">
+  <h2>5. Member status state machine</h2>
+  <p>Suspended members may still sign in and view history, but cannot borrow or join a waitlist.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+stateDiagram-v2
+    [*] --> ACTIVE: librarian registers member
+    ACTIVE --> SUSPENDED: POST /admin/members/{id}/suspend
+    SUSPENDED --> ACTIVE: POST /admin/members/{id}/reactivate
+    </pre>
+  </div>
+</section>
+
+<section id="login">
+  <h2>6. Login sequence</h2>
+  <p>Email is the username. <code>LibraryUserDetailsService</code> loads the member; Spring Security verifies the BCrypt hash. POST <code>/login</code> is handled by the security filter, not a controller method.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant Browser
+    participant SC as SecurityFilterChain
+    participant UDS as LibraryUserDetailsService
+    participant MR as MemberRepository
+    participant PE as PasswordEncoder
+
+    User->>Browser: GET /login
+    Browser-->>User: login form
+    User->>SC: POST /login (email, password)
+    SC->>UDS: loadUserByUsername(email)
+    UDS->>UDS: lowercase email
+    UDS->>MR: findByEmail(email)
+    alt not found
+        UDS-->>SC: UsernameNotFoundException
+        SC-->>User: /login?error
+    else found
+        UDS-->>SC: UserDetails + ROLE_*
+        SC->>PE: matches(raw, hash)
+        alt bad password
+            SC-->>User: /login?error
+        else ok
+            SC->>SC: create session
+            SC-->>User: redirect /catalog
+        end
+    end
+    </pre>
+  </div>
+</section>
+
+<section id="security">
+  <h2>7. Security access rules</h2>
+  <table>
+    <thead>
+      <tr><th>Path pattern</th><th>Required access</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/admin/**</code></td><td><code>hasRole("LIBRARIAN")</code></td></tr>
+      <tr><td><code>/account</code>, borrow / return / waitlist POSTs</td><td>authenticated</td></tr>
+      <tr><td><code>/catalog</code>, <code>/login</code>, static assets, book detail</td><td>permit all</td></tr>
+    </tbody>
+  </table>
+  <p class="note">First librarian is seeded at startup by <code>LibrarianSeeder</code> when no <code>LIBRARIAN</code> exists. Dev defaults: <code>librarian@library.local</code> / <code>changeme123</code>.</p>
+</section>
+
+<section id="borrow">
+  <h2>8. Borrow sequence</h2>
+  <p>Borrow decrements <code>availableCopies</code> and inserts a <code>Loan</code> with due date = today + 14 days in one transaction. A member with a READY hold collects that reserved copy instead of competing with walk-ins.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor Member
+    participant CC as CirculationController
+    participant MS as MemberService
+    participant LS as LoanService
+    participant WS as WaitlistService
+    participant BR as BookRepository
+    participant LR as LoanRepository
+
+    Member->>CC: POST /books/{id}/borrow
+    CC->>MS: getByEmail(principal)
+    CC->>LS: borrow(bookId, member)
+    LS->>BR: findById(bookId)
+    alt suspended
+        LS-->>CC: BorrowNotAllowedException
+    else active
+        LS->>WS: expireStaleHolds(book)
+        LS->>WS: readyHold(book, member)
+        alt has READY hold
+            LS->>LS: mark hold FULFILLED
+        else no hold
+            LS->>WS: effectiveAvailable(book)
+            alt no free copy
+                LS-->>CC: BorrowNotAllowedException
+            end
+        end
+        LS->>LS: availableCopies -= 1
+        LS->>LS: dueDate = today + 14
+        LS->>LR: save(loan)
+        LS-->>CC: Loan
+        CC-->>Member: redirect /account
+    end
+    </pre>
+  </div>
+</section>
+
+<section id="return">
+  <h2>9. Return sequence (with waitlist promotion)</h2>
+  <p>Return closes the loan, increments availability, and promotes the front of the ACTIVE waitlist to READY in the same transaction.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor Member
+    participant CC as CirculationController
+    participant LS as LoanService
+    participant WS as WaitlistService
+    participant WR as WaitlistRepository
+
+    Member->>CC: POST /loans/{id}/return
+    CC->>LS: returnLoan(loanId, member)
+    alt not owner or already returned
+        LS-->>CC: error
+    else open loan
+        LS->>LS: returnDate = today
+        LS->>LS: availableCopies += 1
+        LS->>WS: promoteNext(book)
+        WS->>WR: first ACTIVE by joinedAt
+        alt someone waiting
+            WS->>WS: status READY, readyAt now
+        else empty queue
+            Note over WS: copy stays free
+        end
+        LS-->>CC: Loan
+        CC-->>Member: redirect /account
+    end
+    </pre>
+  </div>
+</section>
+
+<section id="waitlist">
+  <h2>10. Join / leave waitlist</h2>
+  <p>Join is allowed only when no copy is effectively available, and only once per member per title (ACTIVE or READY).</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor Member
+    participant CC as CirculationController
+    participant WS as WaitlistService
+
+    Member->>CC: POST /books/{id}/waitlist
+    CC->>WS: join(bookId, member)
+    WS->>WS: expireStaleHolds(book)
+    alt suspended or already waiting or copies available
+        WS-->>CC: WaitlistException
+    else allowed
+        WS->>WS: create ACTIVE entry
+        WS-->>CC: WaitlistEntry
+        CC-->>Member: notice with position
+    end
+
+    Member->>CC: POST /waitlist/{id}/cancel
+    CC->>WS: cancel(entryId, member)
+    alt was READY
+        WS->>WS: CANCELLED then promoteNext
+    else was ACTIVE
+        WS->>WS: CANCELLED
+    end
+    CC-->>Member: redirect /account
+    </pre>
+  </div>
+</section>
+
+<section id="waitlist-sm">
+  <h2>11. Waitlist state machine</h2>
+  <p>READY holds last 3 days (<code>CirculationPolicy.HOLD_PERIOD_DAYS</code>). Expiry is checked lazily at borrow/join time.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+stateDiagram-v2
+    [*] --> ACTIVE: join waitlist
+    ACTIVE --> READY: return promotes front of line
+    READY --> FULFILLED: holder borrows
+    READY --> CANCELLED: leave list OR hold expires
+    ACTIVE --> CANCELLED: leave list
+    FULFILLED --> [*]
+    CANCELLED --> [*]
+    </pre>
+  </div>
+</section>
+
+<section id="account">
+  <h2>12. Account / borrowing history</h2>
+  <p><code>GET /account</code> loads the signed-in member’s card, open loans (with return actions), waitlist standings, and full loan ledger.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor Member
+    participant AC as AccountController
+    participant MS as MemberService
+    participant LS as LoanService
+    participant WS as WaitlistService
+
+    Member->>AC: GET /account
+    AC->>MS: getByEmail(principal)
+    AC->>LS: historyFor(member)
+    Note over LS: all loans newest first
+    AC->>WS: standingsFor(member)
+    Note over WS: ACTIVE + READY with position
+    AC-->>Member: account view
+    </pre>
+  </div>
+
+  <h3>Key endpoints (member + circulation)</h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Path</th><th>Controller</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/admin/members</code></td><td>MemberController</td></tr>
+      <tr><td>GET</td><td><code>/admin/members/new</code></td><td>MemberController</td></tr>
+      <tr><td>POST</td><td><code>/admin/members</code></td><td>MemberController</td></tr>
+      <tr><td>POST</td><td><code>/admin/members/{id}/suspend</code></td><td>MemberController</td></tr>
+      <tr><td>POST</td><td><code>/admin/members/{id}/reactivate</code></td><td>MemberController</td></tr>
+      <tr><td>GET</td><td><code>/login</code></td><td>LoginController</td></tr>
+      <tr><td>POST</td><td><code>/login</code></td><td>Spring Security</td></tr>
+      <tr><td>POST</td><td><code>/books/{id}/borrow</code></td><td>CirculationController</td></tr>
+      <tr><td>POST</td><td><code>/loans/{id}/return</code></td><td>CirculationController</td></tr>
+      <tr><td>POST</td><td><code>/books/{id}/waitlist</code></td><td>CirculationController</td></tr>
+      <tr><td>POST</td><td><code>/waitlist/{id}/cancel</code></td><td>CirculationController</td></tr>
+      <tr><td>GET</td><td><code>/account</code></td><td>AccountController</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  Library Management System · OOP Final Project · Open this file in a browser to view diagrams.
+  To submit a PDF: File → Print → Save as PDF.
+</footer>
+
+</body>
+</html>
