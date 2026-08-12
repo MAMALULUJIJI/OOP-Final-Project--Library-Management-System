@@ -15,8 +15,10 @@ CREATE TABLE book (
     category         VARCHAR(100),
     total_copies     INTEGER      NOT NULL CHECK (total_copies >= 0),
     available_copies INTEGER      NOT NULL CHECK (available_copies >= 0),
-    -- Optimistic lock, maintained by Hibernate (@Version on Book).
-    version          BIGINT,
+    -- Optimistic lock, maintained by Hibernate (@Version on Book). The default
+    -- matters: adding this column to a database that already holds rows must
+    -- backfill 0, because Hibernate throws on a null version.
+    version          BIGINT       NOT NULL DEFAULT 0,
     CHECK (available_copies <= total_copies)
 );
 

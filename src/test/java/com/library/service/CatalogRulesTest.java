@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import com.library.domain.Book;
 import com.library.domain.Member;
 import com.library.domain.MemberStatus;
 import com.library.domain.Role;
+import com.library.domain.WaitlistEntry;
 import com.library.domain.WaitlistStatus;
 import com.library.repository.BookRepository;
 import com.library.repository.MemberRepository;
@@ -111,7 +113,7 @@ class CatalogRulesTest {
                 "reducing the total onto a reserved copy must be refused");
     }
 
-    /** The end of that scenario: collecting a hold can never go negative. */
+    /** The end of that scenario: collecting a hold lands exactly on zero. */
     @Test
     void collectingAReadyHoldNeverDrivesAvailabilityNegative() {
         Book book = shelve(1);
@@ -125,8 +127,91 @@ class CatalogRulesTest {
         loanService.borrow(book.getId(), waiter);
 
         assertEquals(0, book.getAvailableCopies());
-        assertTrue(book.getAvailableCopies() >= 0,
-                "availableCopies is CHECK (>= 0) in the schema and must stay so");
+    }
+
+    /**
+     * The backstop in {@link LoanService#borrow} itself, exercised directly.
+     * A READY hold against an empty shelf is the state the old guard allowed a
+     * librarian to create; collecting it is what drove the count to -1.
+     */
+    @Test
+    void borrowRefusesOnTheHoldPathWhenTheShelfIsAlreadyEmpty() {
+        Book book = shelve(1);
+        Member holder = card();
+        loanService.borrow(book.getId(), card());
+        assertEquals(0, book.getAvailableCopies());
+
+        WaitlistEntry hold = new WaitlistEntry();
+        hold.setBook(book);
+        hold.setMember(holder);
+        hold.setJoinedAt(LocalDateTime.now());
+        hold.setStatus(WaitlistStatus.READY);
+        hold.setReadyAt(LocalDateTime.now());
+        waitlist.save(hold);
+
+        assertThrows(BorrowNotAllowedException.class,
+                () -> loanService.borrow(book.getId(), holder));
+        assertEquals(0, book.getAvailableCopies(), "the refusal must not decrement");
+    }
+
+    /**
+     * A hold past its collection window is not simply free. Expiring it promotes
+     * whoever is next, so the copy stays reserved — otherwise the catalogue
+     * offers a Borrow button that borrowing refuses.
+     */
+    @Test
+    void aStaleHoldWithSomeoneBehindItKeepsTheCopyReserved() {
+        Book book = shelve(1);
+        Member borrower = card();
+        Member first = card();
+        Member second = card();
+
+        var loan = loanService.borrow(book.getId(), borrower);
+        waitlistService.join(book.getId(), first);
+        waitlistService.join(book.getId(), second);
+        loanService.returnLoan(loan.getId(), borrower);
+
+        WaitlistEntry ready = waitlistService.readyHold(book, first).orElseThrow();
+        ready.setReadyAt(LocalDateTime.now().minusDays(CirculationPolicy.HOLD_PERIOD_DAYS + 1));
+
+        assertEquals(0, waitlistService.effectiveAvailable(book),
+                "expiring the stale hold promotes the next member, so nothing is free");
+    }
+
+    /** With nobody waiting behind it, an expired hold really does free the copy. */
+    @Test
+    void aStaleHoldWithNobodyBehindItReleasesTheCopy() {
+        Book book = shelve(1);
+        Member borrower = card();
+        Member waiter = card();
+
+        var loan = loanService.borrow(book.getId(), borrower);
+        waitlistService.join(book.getId(), waiter);
+        loanService.returnLoan(loan.getId(), borrower);
+
+        WaitlistEntry ready = waitlistService.readyHold(book, waiter).orElseThrow();
+        ready.setReadyAt(LocalDateTime.now().minusDays(CirculationPolicy.HOLD_PERIOD_DAYS + 1));
+
+        assertEquals(1, waitlistService.effectiveAvailable(book));
+    }
+
+    /** The form accepts hyphens, so the uniqueness check must ignore them. */
+    @Test
+    void hyphenatedIsbnIsRecognisedAsTheSameTitle() {
+        BookForm plain = new BookForm();
+        plain.setIsbn("0306406152");
+        plain.setTitle("Probe");
+        plain.setAuthor("Author");
+        plain.setTotalCopies(1);
+        bookService.create(plain);
+
+        BookForm hyphenated = new BookForm();
+        hyphenated.setIsbn("0-306-40615-2");
+        hyphenated.setTitle("Probe Again");
+        hyphenated.setAuthor("Author");
+        hyphenated.setTotalCopies(1);
+
+        assertThrows(DuplicateIsbnException.class, () -> bookService.create(hyphenated));
     }
 
     /** Raising the total puts the new copies straight on the shelf. */

@@ -42,8 +42,12 @@ public class Book {
      * the first and one copy becomes two loans. Hibernate checks and bumps this
      * on every update, so the loser gets an OptimisticLockException instead.
      */
+    // The column carries a default so that ALTER TABLE on a database written
+    // before this field existed backfills 0 instead of NULL — Hibernate throws
+    // an NPE when it reads a null version.
     @Version
-    private Long version;
+    @Column(columnDefinition = "bigint default 0")
+    private Long version = 0L;
 
     public Long getId() {
         return id;

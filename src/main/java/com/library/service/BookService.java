@@ -1,15 +1,13 @@
 package com.library.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.library.domain.Book;
-import com.library.domain.WaitlistStatus;
 import com.library.repository.BookRepository;
-import com.library.repository.LoanRepository;
-import com.library.repository.WaitlistRepository;
 
 /**
  * Business rules for the catalog. All validation beyond simple field checks
@@ -20,13 +18,15 @@ import com.library.repository.WaitlistRepository;
 public class BookService {
 
     private final BookRepository books;
-    private final LoanRepository loans;
-    private final WaitlistRepository waitlist;
+    private final LoanService loanService;
+    private final WaitlistService waitlistService;
 
-    public BookService(BookRepository books, LoanRepository loans, WaitlistRepository waitlist) {
+    // Circulation questions are asked of the circulation services rather than
+    // of their tables. This service owns catalog integrity and nothing else.
+    public BookService(BookRepository books, LoanService loanService, WaitlistService waitlistService) {
         this.books = books;
-        this.loans = loans;
-        this.waitlist = waitlist;
+        this.loanService = loanService;
+        this.waitlistService = waitlistService;
     }
 
     /**
@@ -62,7 +62,7 @@ public class BookService {
     /** A brand-new title starts with every copy on the shelf. */
     @Transactional
     public Book create(BookForm form) {
-        if (books.existsByIsbn(form.getIsbn().trim())) {
+        if (books.existsByIsbn(normaliseIsbn(form.getIsbn().trim()))) {
             throw new DuplicateIsbnException(form.getIsbn());
         }
         Book book = new Book();
@@ -79,7 +79,7 @@ public class BookService {
     public Book update(Long id, BookForm form) {
         Book book = getById(id);
 
-        books.findByIsbn(form.getIsbn().trim())
+        books.findByIsbn(normaliseIsbn(form.getIsbn().trim()))
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
                     throw new DuplicateIsbnException(form.getIsbn());
@@ -90,7 +90,7 @@ public class BookService {
         // here let a librarian shrink the total onto a reserved copy, and the
         // holder collecting it drove availableCopies to -1.
         int onLoan = book.getCopiesOnLoan();
-        int reserved = (int) waitlist.countByBookAndStatus(book, WaitlistStatus.READY);
+        int reserved = waitlistService.reservedCopies(book);
         int committed = onLoan + reserved;
         if (form.getTotalCopies() < committed) {
             throw new IllegalStateException(
@@ -113,19 +113,28 @@ public class BookService {
     @Transactional
     public void delete(Long id) {
         Book book = getById(id);
-        if (book.getCopiesOnLoan() > 0 || loans.existsByBookAndReturnDateIsNull(book)) {
+        if (book.getCopiesOnLoan() > 0 || loanService.hasOpenLoans(book)) {
             throw new IllegalStateException(
                     "Cannot remove \"" + book.getTitle() + "\": "
                             + book.getCopiesOnLoan() + " copies are on loan.");
         }
-        waitlist.deleteByBook(book);
-        loans.deleteByBook(book);
+        waitlistService.purgeFor(book);
+        loanService.purgeFor(book);
         books.delete(book);
+    }
+
+    /**
+     * ISBNs are compared as digits only. The form accepts the hyphenated and
+     * spaced forms people actually type, so without this "0306406152" and
+     * "0-306-40615-2" would pass the uniqueness check as two different titles.
+     */
+    private static String normaliseIsbn(String raw) {
+        return raw.replaceAll("[ -]", "").toUpperCase(Locale.ROOT);
     }
 
     /** The fields a librarian is allowed to set, and only those. */
     private void applyForm(Book book, BookForm form) {
-        book.setIsbn(form.getIsbn().trim());
+        book.setIsbn(normaliseIsbn(form.getIsbn().trim()));
         book.setTitle(form.getTitle().trim());
         book.setAuthor(form.getAuthor().trim());
         book.setCategory(form.getCategory() == null || form.getCategory().isBlank()

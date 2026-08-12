@@ -34,6 +34,17 @@ public class LoanService {
         this.waitlistService = waitlistService;
     }
 
+    /** Whether any copy of a title is still out — the catalog service asks before removal. */
+    public boolean hasOpenLoans(Book book) {
+        return loans.existsByBookAndReturnDateIsNull(book);
+    }
+
+    /** A removed title takes its closed loans with it (called by the catalog service). */
+    @Transactional
+    public void purgeFor(Book book) {
+        loans.deleteByBook(book);
+    }
+
     /** The member's full ledger, newest first. */
     public List<Loan> historyFor(Member member) {
         return loans.findByMemberOrderByBorrowDateDescIdDesc(member);

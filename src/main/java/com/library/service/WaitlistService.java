@@ -41,16 +41,30 @@ public class WaitlistService {
         this.books = books;
     }
 
-    /**
-     * Shelved copies not reserved by a live READY hold — what a walk-in may
-     * borrow. Holds past the collection window are ignored rather than counted:
-     * they are about to be expired anyway, and counting them made the book page
-     * refuse a copy that borrowing would in fact have handed over.
-     */
+    /** Shelved copies nobody has a claim on — what a walk-in may borrow. */
     public int effectiveAvailable(Book book) {
+        return book.getAvailableCopies() - reservedCopies(book);
+    }
+
+    /**
+     * Copies spoken for once stale holds have been retired. A hold past the
+     * collection window is not simply dropped: expiring it promotes the next
+     * member in line, so the copy stays reserved whenever somebody is waiting
+     * behind it. Counting only live holds made the book page offer a Borrow
+     * button that borrowing then refused.
+     */
+    public int reservedCopies(Book book) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(CirculationPolicy.HOLD_PERIOD_DAYS);
         long live = waitlist.countByBookAndStatusAndReadyAtAfter(book, WaitlistStatus.READY, cutoff);
-        return book.getAvailableCopies() - (int) live;
+        long stale = waitlist.countByBookAndStatus(book, WaitlistStatus.READY) - live;
+        long queued = waitlist.countByBookAndStatus(book, WaitlistStatus.ACTIVE);
+        return (int) (live + Math.min(stale, queued));
+    }
+
+    /** A removed title takes its queue with it (called by the catalog service). */
+    @Transactional
+    public void purgeFor(Book book) {
+        waitlist.deleteByBook(book);
     }
 
     public Optional<WaitlistEntry> readyHold(Book book, Member member) {
