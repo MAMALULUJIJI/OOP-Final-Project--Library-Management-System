@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 
 /**
  * A title in the catalog. Availability is a count of copies on the shelf,
@@ -35,8 +36,21 @@ public class Book {
     @Column(nullable = false)
     private int availableCopies;
 
+    /**
+     * Optimistic lock. Two members clicking Borrow on the last copy both read
+     * availableCopies = 1; without this the second write silently overwrites
+     * the first and one copy becomes two loans. Hibernate checks and bumps this
+     * on every update, so the loser gets an OptimisticLockException instead.
+     */
+    @Version
+    private Long version;
+
     public Long getId() {
         return id;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     public void setId(Long id) {

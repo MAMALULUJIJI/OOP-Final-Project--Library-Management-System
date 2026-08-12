@@ -1,6 +1,9 @@
 package com.library.controller;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 
@@ -54,7 +57,17 @@ public class BookController {
     public String catalog(@RequestParam(required = false) String q,
                           @RequestParam(required = false) String category,
                           Model model) {
-        model.addAttribute("books", bookService.search(q, category));
+        List<Book> books = bookService.search(q, category);
+        // The listing used to print the raw copy count while the book page
+        // printed the effective one, so a title whose last copy was promised to
+        // a waitlist hold advertised itself as available and then refused to be
+        // borrowed. Both pages now answer the same question.
+        Map<Long, Integer> effective = new HashMap<>();
+        for (Book book : books) {
+            effective.put(book.getId(), waitlistService.effectiveAvailable(book));
+        }
+        model.addAttribute("books", books);
+        model.addAttribute("effective", effective);
         model.addAttribute("q", q);
         model.addAttribute("category", category);
         return "catalog";

@@ -64,6 +64,12 @@ public class LoanService {
                     : "No copies of \"" + book.getTitle() + "\" are on the shelf — join the waitlist.");
         }
 
+        // Backstop: no path may take the shelf count negative, including the
+        // hold path above, which does not consult effectiveAvailable().
+        if (book.getAvailableCopies() <= 0) {
+            throw new BorrowNotAllowedException(
+                    "No copies of \"" + book.getTitle() + "\" are on the shelf.");
+        }
         book.setAvailableCopies(book.getAvailableCopies() - 1);
 
         Loan loan = new Loan();

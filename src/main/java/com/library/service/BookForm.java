@@ -2,6 +2,7 @@ package com.library.service;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -22,6 +23,11 @@ public class BookForm {
 
     @NotBlank(message = "ISBN is required")
     @Size(max = 20)
+    // Ten or thirteen digits, optionally grouped by hyphens or spaces; a
+    // trailing X is legal as an ISBN-10 check digit. Length and uniqueness
+    // alone let "not-an-isbn!!" into the catalogue.
+    @Pattern(regexp = "^(?:\\d[ -]?){9}[\\dXx]$|^(?:\\d[ -]?){12}\\d$",
+             message = "ISBN must be 10 or 13 digits, optionally hyphenated")
     private String isbn;
 
     @Size(max = 100)

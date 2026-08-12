@@ -40,7 +40,7 @@
         <dl class="specs">
           <dt>ISBN</dt><dd class="isbn" style="font-size:13px;" th:text="${book.isbn}">ISBN</dd>
           <dt>Category</dt><dd th:text="${book.category} ?: 'Uncategorized'">Category</dd>
-          <dt>Copies</dt><dd th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' available'">0 of 0</dd>
+          <dt>Copies</dt><dd th:text="${effectiveAvailable} + ' of ' + ${book.totalCopies} + ' available'">0 of 0</dd>
           <dt>Loan period</dt>
           <dd th:text="${loanDays} + ' days from date of borrowing'">14 days from date of borrowing</dd>
         </dl>

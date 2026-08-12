@@ -15,6 +15,8 @@ CREATE TABLE book (
     category         VARCHAR(100),
     total_copies     INTEGER      NOT NULL CHECK (total_copies >= 0),
     available_copies INTEGER      NOT NULL CHECK (available_copies >= 0),
+    -- Optimistic lock, maintained by Hibernate (@Version on Book).
+    version          BIGINT,
     CHECK (available_copies <= total_copies)
 );
 
@@ -63,6 +65,8 @@ CREATE INDEX ix_loan_member ON loan(member_id);
 CREATE INDEX ix_waitlist_queue ON waitlist_entry(book_id, joined_at);
 
 -- "One spot per member per title" — the database backstop to the service-layer
--- check. Restricted to ACTIVE entries so a member may rejoin a waitlist after an
--- earlier entry is fulfilled or cancelled.
-CREATE UNIQUE INDEX ux_waitlist_active ON waitlist_entry(book_id, member_id) WHERE status = 'ACTIVE';
+-- check. Covers both open states, matching WaitlistService.OPEN_STATUSES, so a
+-- promoted READY hold still occupies the member's one spot. Closed entries are
+-- excluded, so a member may rejoin after an entry is fulfilled or cancelled.
+CREATE UNIQUE INDEX ux_waitlist_open ON waitlist_entry(book_id, member_id)
+    WHERE status IN ('ACTIVE', 'READY');

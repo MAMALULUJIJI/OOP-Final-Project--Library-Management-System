@@ -39,10 +39,11 @@
           <h3 th:text="${book.title}">Title</h3>
           <p class="author" th:text="${book.author}">Author</p>
           <span class="avail"
-                th:classappend="${book.availableCopies == 0} ? 'out' : (${book.availableCopies == 1} ? 'low' : 'in')">
+                th:classappend="${effective.get(book.id) == 0} ? 'out' : (${effective.get(book.id) == 1} ? 'low' : 'in')">
             <span class="dot"></span>
-            <th:block th:if="${book.availableCopies > 0}"
-                      th:text="${book.availableCopies} + ' of ' + ${book.totalCopies} + ' on shelf'"></th:block>
+            <th:block th:if="${effective.get(book.id) > 0}"
+                      th:text="${effective.get(book.id)} + ' of ' + ${book.totalCopies} + ' on shelf'"></th:block>
+            <th:block th:if="${effective.get(book.id) == 0 and book.availableCopies > 0}">Held for the waitlist</th:block>
             <th:block th:if="${book.availableCopies == 0}">On loan</th:block>
           </span>
           <div class="meta">

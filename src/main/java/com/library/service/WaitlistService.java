@@ -41,9 +41,16 @@ public class WaitlistService {
         this.books = books;
     }
 
-    /** Shelved copies not reserved by a READY hold — what a walk-in may borrow. */
+    /**
+     * Shelved copies not reserved by a live READY hold — what a walk-in may
+     * borrow. Holds past the collection window are ignored rather than counted:
+     * they are about to be expired anyway, and counting them made the book page
+     * refuse a copy that borrowing would in fact have handed over.
+     */
     public int effectiveAvailable(Book book) {
-        return book.getAvailableCopies() - (int) waitlist.countByBookAndStatus(book, WaitlistStatus.READY);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(CirculationPolicy.HOLD_PERIOD_DAYS);
+        long live = waitlist.countByBookAndStatusAndReadyAtAfter(book, WaitlistStatus.READY, cutoff);
+        return book.getAvailableCopies() - (int) live;
     }
 
     public Optional<WaitlistEntry> readyHold(Book book, Member member) {

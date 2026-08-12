@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.library.domain.Book;
+import com.library.domain.WaitlistStatus;
 import com.library.repository.BookRepository;
 import com.library.repository.LoanRepository;
 import com.library.repository.WaitlistRepository;
@@ -84,10 +85,18 @@ public class BookService {
                     throw new DuplicateIsbnException(form.getIsbn());
                 });
 
+        // Copies promised to a READY hold are as spoken-for as copies already
+        // out: the member has been told one is waiting. Counting only loans
+        // here let a librarian shrink the total onto a reserved copy, and the
+        // holder collecting it drove availableCopies to -1.
         int onLoan = book.getCopiesOnLoan();
-        if (form.getTotalCopies() < onLoan) {
+        int reserved = (int) waitlist.countByBookAndStatus(book, WaitlistStatus.READY);
+        int committed = onLoan + reserved;
+        if (form.getTotalCopies() < committed) {
             throw new IllegalStateException(
-                    onLoan + " copies are on loan; total copies cannot go below that.");
+                    onLoan + " copies are on loan and " + reserved
+                            + " are held for the waitlist; total copies cannot go below "
+                            + committed + ".");
         }
 
         applyForm(book, form);

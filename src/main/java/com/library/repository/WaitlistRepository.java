@@ -31,6 +31,9 @@ public interface WaitlistRepository extends JpaRepository<WaitlistEntry, Long> {
 
     Optional<WaitlistEntry> findFirstByBookAndMemberAndStatus(Book book, Member member, WaitlistStatus status);
 
+    /** READY holds still inside the hold window — the ones really reserving a copy. */
+    long countByBookAndStatusAndReadyAtAfter(Book book, WaitlistStatus status, LocalDateTime cutoff);
+
     /** READY holds that have sat uncollected past the cutoff. */
     List<WaitlistEntry> findByBookAndStatusAndReadyAtBefore(Book book, WaitlistStatus status, LocalDateTime cutoff);
 
